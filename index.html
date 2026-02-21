@@ -3,14 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance App</title>
+<title>Ledger Mobile</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
 body{
 margin:0;
-font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-background:#f5f7fa;
+font-family:'Inter',sans-serif;
+background:#f8f8f8;
 color:#111;
 }
 
@@ -22,13 +24,20 @@ display:flex;
 flex-direction:column;
 }
 
-header{
-padding:20px;
-background:#14b8a6;
-color:white;
-text-align:center;
-font-size:20px;
-font-weight:600;
+.header{
+padding:25px 20px 10px;
+}
+
+.brand{
+font-family:'Playfair Display',serif;
+font-size:26px;
+}
+
+.subtitle{
+font-size:12px;
+letter-spacing:2px;
+color:#777;
+margin-top:4px;
 }
 
 .screen{
@@ -42,99 +51,110 @@ overflow-y:auto;
 display:block;
 }
 
+.section-title{
+font-family:'Playfair Display',serif;
+font-size:22px;
+margin-bottom:5px;
+}
+
+.section-sub{
+font-size:12px;
+letter-spacing:1px;
+color:#777;
+margin-bottom:20px;
+}
+
 .balance-box{
 background:white;
-padding:20px;
-border-radius:20px;
-box-shadow:0 8px 20px rgba(0,0,0,0.05);
+padding:25px;
+border-radius:8px;
+border:1px solid #ddd;
 margin-bottom:20px;
-text-align:center;
 }
 
 .balance-box h2{
-margin:5px 0;
-font-size:28px;
-color:#14b8a6;
+font-size:40px;
+margin:10px 0;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
 }
 
 .card{
 background:white;
 padding:15px;
-border-radius:15px;
-box-shadow:0 6px 15px rgba(0,0,0,0.04);
-margin-bottom:15px;
+border-radius:8px;
+border:1px solid #ddd;
+}
+
+.card h4{
+font-size:12px;
+letter-spacing:1px;
+color:#666;
+margin:0;
+}
+
+.card div{
+font-size:18px;
+margin-top:5px;
+}
+
+.transaction{
+background:white;
+padding:15px;
+border-radius:8px;
+border:1px solid #ddd;
+margin-bottom:10px;
+}
+
+.transaction-title{
+font-weight:600;
+}
+
+.transaction-meta{
+font-size:12px;
+color:#666;
+margin-top:4px;
+}
+
+.bottom-nav{
+display:flex;
+justify-content:space-around;
+border-top:1px solid #ddd;
+background:white;
+padding:10px 0;
+font-size:13px;
+}
+
+.bottom-nav div{
+flex:1;
+text-align:center;
+cursor:pointer;
 }
 
 input,select{
 width:100%;
 padding:12px;
 margin-top:10px;
-border-radius:12px;
-border:1px solid #ddd;
-font-size:14px;
+border-radius:6px;
+border:1px solid #ccc;
 }
 
-button.primary{
+button{
 width:100%;
 padding:14px;
 margin-top:15px;
-border-radius:15px;
+background:black;
+color:white;
 border:none;
-background:#14b8a6;
-color:white;
-font-weight:600;
-font-size:16px;
-}
-
-.transaction{
-background:white;
-padding:12px;
-border-radius:12px;
-margin-bottom:10px;
-font-size:14px;
-box-shadow:0 4px 10px rgba(0,0,0,0.03);
-}
-
-.month-title{
-font-weight:600;
-margin:15px 0 5px;
-color:#14b8a6;
-}
-
-.bottom-nav{
-display:flex;
-justify-content:space-around;
-background:white;
-padding:10px 0;
-box-shadow:0 -4px 15px rgba(0,0,0,0.05);
-}
-
-.bottom-nav div{
-flex:1;
-text-align:center;
-font-size:14px;
-cursor:pointer;
-}
-
-.fab{
-position:fixed;
-bottom:70px;
-right:20px;
-width:60px;
-height:60px;
-border-radius:50%;
-background:#14b8a6;
-color:white;
-font-size:32px;
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 8px 20px rgba(0,0,0,0.2);
-cursor:pointer;
+border-radius:6px;
 }
 
 canvas{
-margin-top:10px;
+margin-top:20px;
 }
 </style>
 </head>
@@ -143,29 +163,61 @@ margin-top:10px;
 
 <div class="app">
 
-<header>Finance Tracker</header>
+<div class="header">
+<div class="brand">Ledger</div>
+<div class="subtitle">BUDGET TRACKER</div>
+</div>
 
+<!-- DASHBOARD -->
 <div id="dashboard" class="screen active">
 
+<div class="section-title">Dashboard</div>
+<div class="section-sub">FINANCIAL OVERVIEW</div>
+
 <div class="balance-box">
-<div>Balance</div>
-<h2 id="balance">0</h2>
+<div>Available Balance</div>
+<h2 id="balance">₹0</h2>
 </div>
 
+<div class="grid">
 <div class="card">
-Income: <span id="income"></span><br>
-Expense: <span id="expense"></span><br>
-Net Worth: <span id="networth"></span>
+<h4>TOTAL INCOME</h4>
+<div id="income">0</div>
 </div>
-
 <div class="card">
-<canvas id="expenseChart"></canvas>
+<h4>TOTAL EXPENSE</h4>
+<div id="expense">0</div>
+</div>
+<div class="card">
+<h4>ASSETS</h4>
+<div id="asset">0</div>
+</div>
+<div class="card">
+<h4>LIABILITIES</h4>
+<div id="liability">0</div>
+</div>
 </div>
 
 </div>
 
+<!-- TRANSACTIONS -->
+<div id="transactions" class="screen">
+
+<div class="section-title">Transactions</div>
+<div class="section-sub">ALL YOUR ENTRIES</div>
+
+<div id="transactionList"></div>
+
+<button onclick="showScreen('add')">+ Add Transaction</button>
+
+</div>
+
+<!-- ADD -->
 <div id="add" class="screen">
-<div class="card">
+
+<div class="section-title">Add Transaction</div>
+<div class="section-sub">NEW ENTRY</div>
+
 <input type="datetime-local" id="date">
 <select id="type">
 <option>Income</option>
@@ -175,20 +227,26 @@ Net Worth: <span id="networth"></span>
 </select>
 <input type="text" id="category" placeholder="Category">
 <input type="number" id="amount" placeholder="Amount">
-<button class="primary" onclick="addTransaction()">Save</button>
-</div>
+
+<button onclick="addTransaction()">Save</button>
+
 </div>
 
-<div id="history" class="screen">
-<div id="transactions"></div>
+<!-- ANALYTICS -->
+<div id="analytics" class="screen">
+
+<div class="section-title">Analytics</div>
+<div class="section-sub">INSIGHTS & TRENDS</div>
+
+<canvas id="expenseChart"></canvas>
+
 </div>
 
 <div class="bottom-nav">
 <div onclick="showScreen('dashboard')">Dashboard</div>
-<div onclick="showScreen('history')">History</div>
+<div onclick="showScreen('transactions')">Transactions</div>
+<div onclick="showScreen('analytics')">Analytics</div>
 </div>
-
-<div class="fab" onclick="showScreen('add')">+</div>
 
 </div>
 
@@ -213,12 +271,6 @@ const local=new Date(now.getTime()-offset*60000);
 document.getElementById("date").value=local.toISOString().slice(0,16);
 }
 
-function resetForm(){
-document.getElementById("category").value="";
-document.getElementById("amount").value="";
-setCurrentDateTime();
-}
-
 function addTransaction(){
 const date=document.getElementById("date").value;
 const type=document.getElementById("type").value;
@@ -230,8 +282,10 @@ if(!date||!category||!amount)return alert("Fill all fields");
 transactions.push({id:Date.now(),date,type,category,amount});
 save();
 update();
-resetForm();
 showScreen("dashboard");
+setCurrentDateTime();
+document.getElementById("category").value="";
+document.getElementById("amount").value="";
 }
 
 function update(){
@@ -253,39 +307,35 @@ if(t.type==="Liability")liability+=t.amount;
 
 document.getElementById("income").innerText=income;
 document.getElementById("expense").innerText=expense;
-document.getElementById("balance").innerText=income-expense;
-document.getElementById("networth").innerText=asset-liability;
+document.getElementById("asset").innerText=asset;
+document.getElementById("liability").innerText=liability;
+document.getElementById("balance").innerText="₹"+(income-expense);
 
 renderTransactions();
 renderChart(expenseData);
 }
 
 function renderTransactions(){
-const container=document.getElementById("transactions");
+const container=document.getElementById("transactionList");
 container.innerHTML="";
-let grouped={};
-
 transactions.forEach(t=>{
-let month=t.date.substring(0,7);
-if(!grouped[month])grouped[month]=[];
-grouped[month].push(t);
-});
-
-Object.keys(grouped).sort().reverse().forEach(month=>{
-container.innerHTML+=`<div class="month-title">${month}</div>`;
-grouped[month].forEach(t=>{
 container.innerHTML+=`
 <div class="transaction">
-${new Date(t.date).toLocaleString()} | ${t.type} | ${t.category} | ${t.amount}
+<div class="transaction-title">${t.category}</div>
+<div class="transaction-meta">
+${new Date(t.date).toLocaleString()} • ${t.type} • ₹${t.amount}
+</div>
 </div>`;
-});
 });
 }
 
 function renderChart(data){
 const ctx=document.getElementById("expenseChart");
 if(chart)chart.destroy();
-chart=new Chart(ctx,{type:"pie",data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}});
+chart=new Chart(ctx,{
+type:"pie",
+data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}
+});
 }
 
 setCurrentDateTime();
