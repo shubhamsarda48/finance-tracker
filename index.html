@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Professional Finance Tracker</title>
+<title>Finance Tracker Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -91,16 +91,26 @@ button:hover {
 
 .month-title {
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 12px;
+    font-size: 16px;
 }
 </style>
 </head>
 
 <body>
 
-<header>Finance Tracker</header>
+<header>Finance Tracker Pro</header>
 
 <div class="container">
+
+<div class="card">
+<h3>Currency</h3>
+<select id="currency" onchange="saveCurrency()">
+<option value="₹">₹ INR</option>
+<option value="$">$ USD</option>
+<option value="€">€ EUR</option>
+</select>
+</div>
 
 <div class="card grid">
 <div class="stat"><h4>Income</h4><div id="income"></div></div>
@@ -118,7 +128,10 @@ button:hover {
 <option>Asset</option>
 <option>Liability</option>
 </select>
-<input type="text" id="category" placeholder="Subcategory">
+
+<select id="categoryDropdown"></select>
+<input type="text" id="newCategory" placeholder="Or Add New Category">
+
 <input type="number" id="amount" placeholder="Amount">
 <button onclick="addTransaction()">Add</button>
 </div>
@@ -133,27 +146,58 @@ button:hover {
 <canvas id="expenseChart"></canvas>
 </div>
 
+<div class="card">
+<h3>Monthly Comparison</h3>
+<canvas id="monthlyChart"></canvas>
+</div>
+
 </div>
 
 <script>
 
 let transactions = JSON.parse(localStorage.getItem("financeData")) || [];
-let chart;
+let categories = JSON.parse(localStorage.getItem("categories")) || [];
+let savedCurrency = localStorage.getItem("currency") || "₹";
+
+let expenseChart, monthlyChart;
+
+document.getElementById("currency").value = savedCurrency;
+
+function saveCurrency(){
+localStorage.setItem("currency", document.getElementById("currency").value);
+update();
+}
 
 function saveData(){
 localStorage.setItem("financeData", JSON.stringify(transactions));
+localStorage.setItem("categories", JSON.stringify(categories));
+}
+
+function loadCategories(){
+const dropdown = document.getElementById("categoryDropdown");
+dropdown.innerHTML="";
+categories.forEach(cat=>{
+dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+});
 }
 
 function addTransaction(){
 const date = document.getElementById("date").value;
 const type = document.getElementById("type").value;
-const category = document.getElementById("category").value;
+let category = document.getElementById("categoryDropdown").value;
+const newCat = document.getElementById("newCategory").value;
 const amount = parseFloat(document.getElementById("amount").value);
+
+if(newCat){
+category = newCat;
+categories.push(newCat);
+}
 
 if(!date || !category || !amount) return alert("Fill all fields");
 
 transactions.push({id:Date.now(),date,type,category,amount});
 saveData();
+loadCategories();
 update();
 }
 
@@ -167,8 +211,8 @@ function editTransaction(id){
 const t = transactions.find(t=>t.id===id);
 document.getElementById("date").value = t.date;
 document.getElementById("type").value = t.type;
-document.getElementById("category").value = t.category;
 document.getElementById("amount").value = t.amount;
+document.getElementById("newCategory").value = t.category;
 deleteTransaction(id);
 }
 
@@ -176,31 +220,42 @@ function update(){
 
 let income=0,expense=0,asset=0,liability=0;
 let expenseCategories={};
+let monthlyIncome={}, monthlyExpense={};
 
 transactions.forEach(t=>{
-if(t.type==="Income") income+=t.amount;
+let month=t.date.substring(0,7);
+
+if(t.type==="Income"){
+income+=t.amount;
+monthlyIncome[month]=(monthlyIncome[month]||0)+t.amount;
+}
+
 if(t.type==="Expense"){
 expense+=t.amount;
 expenseCategories[t.category]=(expenseCategories[t.category]||0)+t.amount;
+monthlyExpense[month]=(monthlyExpense[month]||0)+t.amount;
 }
+
 if(t.type==="Asset") asset+=t.amount;
 if(t.type==="Liability") liability+=t.amount;
 });
 
-document.getElementById("income").innerText=income;
-document.getElementById("expense").innerText=expense;
-document.getElementById("balance").innerText=income-expense;
-document.getElementById("networth").innerText=asset-liability;
+const currency=document.getElementById("currency").value;
+
+document.getElementById("income").innerText=currency+income;
+document.getElementById("expense").innerText=currency+expense;
+document.getElementById("balance").innerText=currency+(income-expense);
+document.getElementById("networth").innerText=currency+(asset-liability);
 
 renderTransactions();
-renderChart(expenseCategories);
+renderExpenseChart(expenseCategories);
+renderMonthlyChart(monthlyIncome,monthlyExpense);
 }
 
 function renderTransactions(){
 
 const container=document.getElementById("transactions");
 container.innerHTML="";
-
 let grouped={};
 
 transactions.forEach(t=>{
@@ -219,19 +274,17 @@ ${t.date} | ${t.type} | ${t.category} | ${t.amount}
 <button onclick="editTransaction(${t.id})">Edit</button>
 <button onclick="deleteTransaction(${t.id})">Delete</button>
 </div>
-</div>
-`;
+</div>`;
 });
 });
 }
 
-function renderChart(data){
+function renderExpenseChart(data){
 
 const ctx=document.getElementById("expenseChart");
+if(expenseChart) expenseChart.destroy();
 
-if(chart) chart.destroy();
-
-chart=new Chart(ctx,{
+expenseChart=new Chart(ctx,{
 type:"pie",
 data:{
 labels:Object.keys(data),
@@ -240,6 +293,26 @@ datasets:[{data:Object.values(data)}]
 });
 }
 
+function renderMonthlyChart(incomeData,expenseData){
+
+const ctx=document.getElementById("monthlyChart");
+if(monthlyChart) monthlyChart.destroy();
+
+const months=[...new Set([...Object.keys(incomeData),...Object.keys(expenseData)])].sort();
+
+monthlyChart=new Chart(ctx,{
+type:"bar",
+data:{
+labels:months,
+datasets:[
+{label:"Income",data:months.map(m=>incomeData[m]||0)},
+{label:"Expense",data:months.map(m=>expenseData[m]||0)}
+]
+}
+});
+}
+
+loadCategories();
 update();
 
 </script>
