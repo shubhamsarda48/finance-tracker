@@ -166,7 +166,7 @@ Net Worth: <span id="networth"></span>
 
 <div id="add" class="screen">
 <div class="card">
-<input type="date" id="date">
+<input type="datetime-local" id="date">
 <select id="type">
 <option>Income</option>
 <option>Expense</option>
@@ -206,6 +206,19 @@ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
+function setCurrentDateTime(){
+const now=new Date();
+const offset=now.getTimezoneOffset();
+const local=new Date(now.getTime()-offset*60000);
+document.getElementById("date").value=local.toISOString().slice(0,16);
+}
+
+function resetForm(){
+document.getElementById("category").value="";
+document.getElementById("amount").value="";
+setCurrentDateTime();
+}
+
 function addTransaction(){
 const date=document.getElementById("date").value;
 const type=document.getElementById("type").value;
@@ -217,6 +230,7 @@ if(!date||!category||!amount)return alert("Fill all fields");
 transactions.push({id:Date.now(),date,type,category,amount});
 save();
 update();
+resetForm();
 showScreen("dashboard");
 }
 
@@ -224,6 +238,8 @@ function update(){
 
 let income=0,expense=0,asset=0,liability=0;
 let expenseData={};
+
+transactions.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
 transactions.forEach(t=>{
 if(t.type==="Income")income+=t.amount;
@@ -260,7 +276,7 @@ container.innerHTML+=`<div class="month-title">${month}</div>`;
 grouped[month].forEach(t=>{
 container.innerHTML+=`
 <div class="transaction">
-${t.date} | ${t.type} | ${t.category} | ${t.amount}
+${new Date(t.date).toLocaleString()} | ${t.type} | ${t.category} | ${t.amount}
 </div>`;
 });
 });
@@ -272,6 +288,7 @@ if(chart)chart.destroy();
 chart=new Chart(ctx,{type:"pie",data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}});
 }
 
+setCurrentDateTime();
 update();
 
 </script>
