@@ -3,135 +3,169 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance Tracker Pro</title>
+<title>Finance App</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    margin: 0;
-    background: linear-gradient(135deg, #e0f2f1, #f1f8f7);
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+background:#f5f7fa;
+color:#111;
 }
 
-header {
-    padding: 20px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 600;
-    color: #0f766e;
+.app{
+max-width:480px;
+margin:auto;
+min-height:100vh;
+display:flex;
+flex-direction:column;
 }
 
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 15px;
+header{
+padding:20px;
+background:#14b8a6;
+color:white;
+text-align:center;
+font-size:20px;
+font-weight:600;
 }
 
-.card {
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
-    padding: 18px;
-    margin-bottom: 20px;
-    border-radius: 18px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-    transition: 0.3s;
+.screen{
+flex:1;
+display:none;
+padding:20px;
+overflow-y:auto;
 }
 
-.card:hover {
-    transform: translateY(-3px);
+.active{
+display:block;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-    gap: 15px;
+.balance-box{
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0 8px 20px rgba(0,0,0,0.05);
+margin-bottom:20px;
+text-align:center;
 }
 
-.stat {
-    padding: 15px;
-    border-radius: 15px;
-    background: #ffffff;
-    box-shadow: inset 0 0 0 1px #e0f2f1;
-    text-align: center;
+.balance-box h2{
+margin:5px 0;
+font-size:28px;
+color:#14b8a6;
 }
 
-.stat h4 {
-    margin: 0;
-    font-size: 14px;
-    color: #6b7280;
+.card{
+background:white;
+padding:15px;
+border-radius:15px;
+box-shadow:0 6px 15px rgba(0,0,0,0.04);
+margin-bottom:15px;
 }
 
-.stat div {
-    font-size: 20px;
-    font-weight: 600;
-    margin-top: 5px;
-    color: #0f766e;
+input,select{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:12px;
+border:1px solid #ddd;
+font-size:14px;
 }
 
-input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    font-size: 14px;
+button.primary{
+width:100%;
+padding:14px;
+margin-top:15px;
+border-radius:15px;
+border:none;
+background:#14b8a6;
+color:white;
+font-weight:600;
+font-size:16px;
 }
 
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 12px;
-    border: none;
-    background: #14b8a6;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: 0.3s;
+.transaction{
+background:white;
+padding:12px;
+border-radius:12px;
+margin-bottom:10px;
+font-size:14px;
+box-shadow:0 4px 10px rgba(0,0,0,0.03);
 }
 
-button:hover {
-    background: #0f766e;
+.month-title{
+font-weight:600;
+margin:15px 0 5px;
+color:#14b8a6;
 }
 
-.transaction {
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    background: #f9fafb;
-    font-size: 14px;
+.bottom-nav{
+display:flex;
+justify-content:space-around;
+background:white;
+padding:10px 0;
+box-shadow:0 -4px 15px rgba(0,0,0,0.05);
 }
 
-.month-title {
-    font-weight: 600;
-    margin: 15px 0 8px;
-    color: #0f766e;
+.bottom-nav div{
+flex:1;
+text-align:center;
+font-size:14px;
+cursor:pointer;
 }
 
-.actions button {
-    background: #e5e7eb;
-    color: #111827;
-    margin-top: 5px;
+.fab{
+position:fixed;
+bottom:70px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:50%;
+background:#14b8a6;
+color:white;
+font-size:32px;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 8px 20px rgba(0,0,0,0.2);
+cursor:pointer;
+}
+
+canvas{
+margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<header>💼 Finance Tracker Pro</header>
+<div class="app">
 
-<div class="container">
+<header>Finance Tracker</header>
 
-<div class="card grid">
-<div class="stat"><h4>Income</h4><div id="income"></div></div>
-<div class="stat"><h4>Expense</h4><div id="expense"></div></div>
-<div class="stat"><h4>Balance</h4><div id="balance"></div></div>
-<div class="stat"><h4>Net Worth</h4><div id="networth"></div></div>
+<div id="dashboard" class="screen active">
+
+<div class="balance-box">
+<div>Balance</div>
+<h2 id="balance">0</h2>
 </div>
 
 <div class="card">
-<h3>Add Transaction</h3>
+Income: <span id="income"></span><br>
+Expense: <span id="expense"></span><br>
+Net Worth: <span id="networth"></span>
+</div>
+
+<div class="card">
+<canvas id="expenseChart"></canvas>
+</div>
+
+</div>
+
+<div id="add" class="screen">
+<div class="card">
 <input type="date" id="date">
 <select id="type">
 <option>Income</option>
@@ -139,97 +173,66 @@ button:hover {
 <option>Asset</option>
 <option>Liability</option>
 </select>
-
-<select id="categoryDropdown"></select>
-<input type="text" id="newCategory" placeholder="Add New Category">
-
+<input type="text" id="category" placeholder="Category">
 <input type="number" id="amount" placeholder="Amount">
-<button onclick="addTransaction()">Add Transaction</button>
+<button class="primary" onclick="addTransaction()">Save</button>
+</div>
 </div>
 
-<div class="card">
-<h3>Transactions</h3>
+<div id="history" class="screen">
 <div id="transactions"></div>
 </div>
 
-<div class="card">
-<h3>Expense Breakdown</h3>
-<canvas id="expenseChart"></canvas>
+<div class="bottom-nav">
+<div onclick="showScreen('dashboard')">Dashboard</div>
+<div onclick="showScreen('history')">History</div>
 </div>
 
-<div class="card">
-<h3>Monthly Comparison</h3>
-<canvas id="monthlyChart"></canvas>
-</div>
+<div class="fab" onclick="showScreen('add')">+</div>
 
 </div>
 
 <script>
 
-let transactions = JSON.parse(localStorage.getItem("financeData")) || [];
-let categories = JSON.parse(localStorage.getItem("categories")) || [];
-let expenseChart, monthlyChart;
+let transactions=JSON.parse(localStorage.getItem("data"))||[];
+let chart;
 
-function saveData(){
-localStorage.setItem("financeData", JSON.stringify(transactions));
-localStorage.setItem("categories", JSON.stringify(categories));
+function save(){
+localStorage.setItem("data",JSON.stringify(transactions));
 }
 
-function loadCategories(){
-const dropdown = document.getElementById("categoryDropdown");
-dropdown.innerHTML="";
-categories.forEach(cat=>{
-dropdown.innerHTML+=`<option value="${cat}">${cat}</option>`;
-});
+function showScreen(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
 }
 
 function addTransaction(){
 const date=document.getElementById("date").value;
 const type=document.getElementById("type").value;
-let category=document.getElementById("categoryDropdown").value;
-const newCat=document.getElementById("newCategory").value;
+const category=document.getElementById("category").value;
 const amount=parseFloat(document.getElementById("amount").value);
 
-if(newCat){
-category=newCat;
-categories.push(newCat);
-}
-
-if(!date||!category||!amount) return alert("Fill all fields");
+if(!date||!category||!amount)return alert("Fill all fields");
 
 transactions.push({id:Date.now(),date,type,category,amount});
-saveData();
-loadCategories();
+save();
 update();
-}
-
-function deleteTransaction(id){
-transactions=transactions.filter(t=>t.id!==id);
-saveData();
-update();
-}
-
-function editTransaction(id){
-const t=transactions.find(t=>t.id===id);
-document.getElementById("date").value=t.date;
-document.getElementById("type").value=t.type;
-document.getElementById("newCategory").value=t.category;
-document.getElementById("amount").value=t.amount;
-deleteTransaction(id);
+showScreen("dashboard");
 }
 
 function update(){
 
 let income=0,expense=0,asset=0,liability=0;
-let expenseCategories={},monthlyIncome={},monthlyExpense={};
+let expenseData={};
 
 transactions.forEach(t=>{
-let month=t.date.substring(0,7);
-
-if(t.type==="Income"){income+=t.amount;monthlyIncome[month]=(monthlyIncome[month]||0)+t.amount;}
-if(t.type==="Expense"){expense+=t.amount;expenseCategories[t.category]=(expenseCategories[t.category]||0)+t.amount;monthlyExpense[month]=(monthlyExpense[month]||0)+t.amount;}
-if(t.type==="Asset") asset+=t.amount;
-if(t.type==="Liability") liability+=t.amount;
+if(t.type==="Income")income+=t.amount;
+if(t.type==="Expense"){
+expense+=t.amount;
+expenseData[t.category]=(expenseData[t.category]||0)+t.amount;
+}
+if(t.type==="Asset")asset+=t.amount;
+if(t.type==="Liability")liability+=t.amount;
 });
 
 document.getElementById("income").innerText=income;
@@ -238,8 +241,7 @@ document.getElementById("balance").innerText=income-expense;
 document.getElementById("networth").innerText=asset-liability;
 
 renderTransactions();
-renderExpenseChart(expenseCategories);
-renderMonthlyChart(monthlyIncome,monthlyExpense);
+renderChart(expenseData);
 }
 
 function renderTransactions(){
@@ -249,7 +251,7 @@ let grouped={};
 
 transactions.forEach(t=>{
 let month=t.date.substring(0,7);
-if(!grouped[month]) grouped[month]=[];
+if(!grouped[month])grouped[month]=[];
 grouped[month].push(t);
 });
 
@@ -259,38 +261,17 @@ grouped[month].forEach(t=>{
 container.innerHTML+=`
 <div class="transaction">
 ${t.date} | ${t.type} | ${t.category} | ${t.amount}
-<div class="actions">
-<button onclick="editTransaction(${t.id})">Edit</button>
-<button onclick="deleteTransaction(${t.id})">Delete</button>
-</div>
 </div>`;
 });
 });
 }
 
-function renderExpenseChart(data){
+function renderChart(data){
 const ctx=document.getElementById("expenseChart");
-if(expenseChart) expenseChart.destroy();
-expenseChart=new Chart(ctx,{type:"pie",data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}});
+if(chart)chart.destroy();
+chart=new Chart(ctx,{type:"pie",data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}});
 }
 
-function renderMonthlyChart(incomeData,expenseData){
-const ctx=document.getElementById("monthlyChart");
-if(monthlyChart) monthlyChart.destroy();
-const months=[...new Set([...Object.keys(incomeData),...Object.keys(expenseData)])].sort();
-monthlyChart=new Chart(ctx,{
-type:"bar",
-data:{
-labels:months,
-datasets:[
-{label:"Income",data:months.map(m=>incomeData[m]||0)},
-{label:"Expense",data:months.map(m=>expenseData[m]||0)}
-]
-}
-});
-}
-
-loadCategories();
 update();
 
 </script>
