@@ -165,6 +165,7 @@ Liability:["HDFC Credit Card","One Card","Yes Bank Credit Card"]
 };
 
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+let editId = null;
 
 function saveAll(){
 localStorage.setItem("transactions",JSON.stringify(transactions));
@@ -206,7 +207,6 @@ function addLedger(){
 const type=document.getElementById("type").value;
 const name=document.getElementById("newLedger").value.trim();
 if(!type||!name)return alert("Select type & enter name");
-
 if(type==="Splitwise")return alert("Splitwise is system ledger");
 
 if(!ledgers[type].includes(name)){
@@ -225,6 +225,11 @@ const amount=parseFloat(document.getElementById("amount").value);
 const description=document.getElementById("description").value;
 
 if(!date||!type||!ledger||isNaN(amount))return alert("Fill required");
+
+if(editId){
+transactions = transactions.filter(t => t.id !== editId && t.linkedId !== editId);
+editId = null;
+}
 
 const id=Date.now();
 
@@ -262,6 +267,28 @@ document.getElementById("paidByCard").checked=false;
 setNow();
 }
 
+function editTransaction(id){
+const t = transactions.find(t=>t.id===id);
+if(!t) return;
+
+editId = id;
+
+document.getElementById("date").value = t.date;
+document.getElementById("type").value = t.type==="Asset"&&t.ledger==="Splitwise"||t.type==="Liability"&&t.ledger==="Splitwise"?"Splitwise":t.type;
+handleTypeChange();
+document.getElementById("ledgerSelect").value = t.ledger;
+document.getElementById("amount").value = t.amount;
+document.getElementById("description").value = t.description;
+}
+
+function deleteTransaction(id){
+if(!confirm("Delete this transaction?")) return;
+
+transactions = transactions.filter(t => t.id !== id && t.linkedId !== id);
+saveAll();
+update();
+}
+
 function update(){
 let income=0,expense=0,asset=0,liability=0;
 
@@ -292,6 +319,9 @@ container.innerHTML+=`
 <strong>${t.ledger}</strong> (${t.type}) - ₹${t.amount}<br>
 ${new Date(t.date).toLocaleString()}<br>
 ${t.description||""}
+<br>
+<button class="small-btn" onclick="editTransaction(${t.id})">Edit</button>
+<button class="small-btn" onclick="deleteTransaction(${t.id})">Delete</button>
 </div>`;
 });
 }
@@ -300,6 +330,5 @@ setNow();
 update();
 
 </script>
-
 </body>
 </html>
