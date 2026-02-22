@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ledger</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -12,12 +13,14 @@ margin:0;
 font-family:'Inter',sans-serif;
 background:#f8f8f8;
 color:#111;
+overflow-x:hidden;
 }
 
 .app{
 max-width:480px;
 margin:auto;
 min-height:100vh;
+position:relative;
 }
 
 .header{
@@ -29,14 +32,31 @@ font-family:'Playfair Display',serif;
 font-size:26px;
 }
 
-.section{
+.screen{
+position:absolute;
+width:100%;
+top:80px;
+left:0;
 padding:20px;
+transition:0.3s ease;
+min-height:100vh;
+background:#f8f8f8;
 }
 
-.section-title{
-font-family:'Playfair Display',serif;
-font-size:20px;
+.hidden{
+transform:translateX(100%);
+}
+
+.active{
+transform:translateX(0);
+}
+
+.card{
+background:white;
+padding:15px;
+border:1px solid #ddd;
 margin-bottom:10px;
+cursor:pointer;
 }
 
 .balance-box{
@@ -46,35 +66,41 @@ border:1px solid #ddd;
 margin-bottom:15px;
 }
 
-input,select,textarea{
+button{
 width:100%;
 padding:10px;
 margin-top:8px;
-border:1px solid #ccc;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
+border:none;
 background:black;
 color:white;
-border:none;
 }
 
 .small-btn{
 background:#eee;
 color:#111;
-padding:6px;
-margin-top:5px;
 font-size:12px;
+padding:6px;
+margin-top:6px;
 }
 
-.transaction{
-background:white;
-border:1px solid #ddd;
-padding:12px;
+.filter-btn{
+background:#eee;
+color:#111;
+margin-right:5px;
+margin-top:5px;
+padding:5px;
+display:inline-block;
+font-size:12px;
+cursor:pointer;
+}
+
+.back-btn{
+background:#eee;
+color:#111;
+padding:6px;
 margin-bottom:10px;
+display:inline-block;
+cursor:pointer;
 }
 </style>
 </head>
@@ -87,9 +113,8 @@ margin-bottom:10px;
 <div class="brand">Ledger</div>
 </div>
 
-<div class="section">
-
-<div class="section-title">Dashboard</div>
+<!-- DASHBOARD -->
+<div id="dashboard" class="screen active">
 
 <div class="balance-box">
 Balance: ₹<span id="balance">0</span><br>
@@ -99,58 +124,38 @@ Assets: ₹<span id="asset">0</span><br>
 Liabilities: ₹<span id="liability">0</span>
 </div>
 
-</div>
-
-<div class="section">
-
-<div class="section-title">Add Transaction</div>
-
-<input type="datetime-local" id="date">
-
-<select id="type" onchange="handleTypeChange()">
-<option value="">Select Type</option>
-<option>Income</option>
-<option>Expense</option>
-<option>Asset</option>
-<option>Liability</option>
-<option>Splitwise</option>
-</select>
-
-<select id="ledgerSelect"></select>
-
-<input type="text" id="newLedger" placeholder="Add New Ledger (optional)">
-<button onclick="addLedger()">Add Ledger</button>
-
-<div id="splitwiseSection" style="display:none;">
-<select id="splitwiseMode">
-<option value="get">You Get</option>
-<option value="owe">You Owe</option>
-</select>
-</div>
-
-<div id="creditCardSection" style="display:none;">
-<label>
-<input type="checkbox" id="paidByCard"> Paid via Credit Card
-</label>
-<select id="cardSelect">
-<option>HDFC Credit Card</option>
-<option>One Card</option>
-<option>Yes Bank Credit Card</option>
-</select>
-</div>
-
-<input type="number" id="amount" placeholder="Amount (negative allowed)">
-<textarea id="description" placeholder="Description (optional)"></textarea>
-
-<button onclick="saveTransaction()">Save</button>
+<div class="card" onclick="openType('Income')">Income</div>
+<div class="card" onclick="openType('Expense')">Expense</div>
+<div class="card" onclick="openType('Asset')">Assets</div>
+<div class="card" onclick="openType('Liability')">Liabilities</div>
 
 </div>
 
-<div class="section">
+<!-- CATEGORY SCREEN -->
+<div id="categoryScreen" class="screen hidden">
+<div class="back-btn" onclick="goBack()">← Back</div>
+<div id="categoryTitle"></div>
+<div id="categoryList"></div>
+</div>
 
-<div class="section-title">Transactions</div>
+<!-- TRANSACTION SCREEN -->
+<div id="transactionScreen" class="screen hidden">
+<div class="back-btn" onclick="goBack()">← Back</div>
+<div id="transactionTitle"></div>
+
+<div>
+<div class="filter-btn" onclick="applyQuickFilter('thisMonth')">This Month</div>
+<div class="filter-btn" onclick="applyQuickFilter('lastMonth')">Last Month</div>
+<div class="filter-btn" onclick="applyQuickFilter('thisYear')">This Year</div>
+</div>
+
+<div style="margin-top:10px;">
+From: <input type="date" id="fromDate">
+To: <input type="date" id="toDate">
+<button onclick="applyCustomFilter()">Apply</button>
+</div>
+
 <div id="transactionList"></div>
-
 </div>
 
 </div>
@@ -165,131 +170,31 @@ Liability:["HDFC Credit Card","One Card","Yes Bank Credit Card"]
 };
 
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
-let editId = null;
+
+let navStack = [];
+let currentType = null;
+let currentLedger = null;
 
 function saveAll(){
 localStorage.setItem("transactions",JSON.stringify(transactions));
 localStorage.setItem("ledgers",JSON.stringify(ledgers));
 }
 
-function setNow(){
-const now=new Date();
-const offset=now.getTimezoneOffset();
-const local=new Date(now.getTime()-offset*60000);
-document.getElementById("date").value=local.toISOString().slice(0,16);
+function navigate(screen){
+document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));
+document.getElementById(screen).classList.remove("hidden");
+document.getElementById(screen).classList.add("active");
+navStack.push(screen);
 }
 
-function handleTypeChange(){
-const type=document.getElementById("type").value;
-const select=document.getElementById("ledgerSelect");
-select.innerHTML="";
-document.getElementById("splitwiseSection").style.display="none";
-document.getElementById("creditCardSection").style.display="none";
-
-if(type==="Splitwise"){
-document.getElementById("splitwiseSection").style.display="block";
-select.innerHTML="<option>Splitwise</option>";
-return;
+function goBack(){
+navStack.pop();
+const prev = navStack[navStack.length-1] || "dashboard";
+document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));
+document.getElementById(prev).classList.remove("hidden");
 }
 
-if(ledgers[type]){
-ledgers[type].forEach(l=>{
-select.innerHTML+=`<option>${l}</option>`;
-});
-}
-
-if(type==="Expense"){
-document.getElementById("creditCardSection").style.display="block";
-}
-}
-
-function addLedger(){
-const type=document.getElementById("type").value;
-const name=document.getElementById("newLedger").value.trim();
-if(!type||!name)return alert("Select type & enter name");
-if(type==="Splitwise")return alert("Splitwise is system ledger");
-
-if(!ledgers[type].includes(name)){
-ledgers[type].push(name);
-saveAll();
-handleTypeChange();
-document.getElementById("newLedger").value="";
-}
-}
-
-function saveTransaction(){
-const date=document.getElementById("date").value;
-const type=document.getElementById("type").value;
-let ledger=document.getElementById("ledgerSelect").value;
-const amount=parseFloat(document.getElementById("amount").value);
-const description=document.getElementById("description").value;
-
-if(!date||!type||!ledger||isNaN(amount))return alert("Fill required");
-
-if(editId){
-transactions = transactions.filter(t => t.id !== editId && t.linkedId !== editId);
-editId = null;
-}
-
-const id=Date.now();
-
-if(type==="Splitwise"){
-const mode=document.getElementById("splitwiseMode").value;
-const finalType=mode==="get"?"Asset":"Liability";
-transactions.push({id,date,type:finalType,ledger:"Splitwise",amount,description});
-}else{
-transactions.push({id,date,type,ledger,amount,description});
-}
-
-if(type==="Expense" && document.getElementById("paidByCard").checked){
-const card=document.getElementById("cardSelect").value;
-transactions.push({
-id:Date.now()+1,
-date,
-type:"Liability",
-ledger:card,
-amount:amount,
-description:"Auto from expense",
-linkedId:id
-});
-}
-
-saveAll();
-update();
-resetForm();
-}
-
-function resetForm(){
-document.getElementById("amount").value="";
-document.getElementById("description").value="";
-document.getElementById("newLedger").value="";
-document.getElementById("paidByCard").checked=false;
-setNow();
-}
-
-function editTransaction(id){
-const t = transactions.find(t=>t.id===id);
-if(!t) return;
-
-editId = id;
-
-document.getElementById("date").value = t.date;
-document.getElementById("type").value = t.type==="Asset"&&t.ledger==="Splitwise"||t.type==="Liability"&&t.ledger==="Splitwise"?"Splitwise":t.type;
-handleTypeChange();
-document.getElementById("ledgerSelect").value = t.ledger;
-document.getElementById("amount").value = t.amount;
-document.getElementById("description").value = t.description;
-}
-
-function deleteTransaction(id){
-if(!confirm("Delete this transaction?")) return;
-
-transactions = transactions.filter(t => t.id !== id && t.linkedId !== id);
-saveAll();
-update();
-}
-
-function update(){
+function updateDashboard(){
 let income=0,expense=0,asset=0,liability=0;
 
 transactions.forEach(t=>{
@@ -304,31 +209,107 @@ document.getElementById("expense").innerText=expense;
 document.getElementById("asset").innerText=asset;
 document.getElementById("liability").innerText=liability;
 document.getElementById("balance").innerText=income-expense;
-
-renderTransactions();
 }
 
-function renderTransactions(){
-const container=document.getElementById("transactionList");
-container.innerHTML="";
-transactions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+function openType(type){
+currentType = type;
+document.getElementById("categoryTitle").innerHTML="<h3>"+type+"</h3>";
+let html="";
+let list = ledgers[type] || [];
 
-transactions.forEach(t=>{
-container.innerHTML+=`
-<div class="transaction">
-<strong>${t.ledger}</strong> (${t.type}) - ₹${t.amount}<br>
+if(type==="Asset" || type==="Liability"){
+let splitwiseBalance = getLedgerBalance("Splitwise","Asset") - getLedgerBalance("Splitwise","Liability");
+if(type==="Asset" && splitwiseBalance>0){
+html+=`<div class="card" onclick="openLedger('Splitwise')">Splitwise - ₹${splitwiseBalance}</div>`;
+}
+if(type==="Liability" && splitwiseBalance<0){
+html+=`<div class="card" onclick="openLedger('Splitwise')">Splitwise - ₹${Math.abs(splitwiseBalance)}</div>`;
+}
+}
+
+list.forEach(l=>{
+let bal=getLedgerBalance(l,type);
+html+=`<div class="card" onclick="openLedger('${l}')">${l} - ₹${bal}</div>`;
+});
+
+document.getElementById("categoryList").innerHTML=html;
+navigate("categoryScreen");
+}
+
+function getLedgerBalance(name,type){
+return transactions
+.filter(t=>t.ledger===name && t.type===type)
+.reduce((sum,t)=>sum+t.amount,0);
+}
+
+function openLedger(ledger){
+currentLedger = ledger;
+document.getElementById("transactionTitle").innerHTML="<h3>"+ledger+"</h3>";
+renderTransactions(transactions.filter(t=>t.ledger===ledger));
+navigate("transactionScreen");
+}
+
+function renderTransactions(list){
+let html="";
+list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+list.forEach(t=>{
+html+=`
+<div class="card">
+₹${t.amount}<br>
 ${new Date(t.date).toLocaleString()}<br>
 ${t.description||""}
-<br>
-<button class="small-btn" onclick="editTransaction(${t.id})">Edit</button>
 <button class="small-btn" onclick="deleteTransaction(${t.id})">Delete</button>
 </div>`;
 });
+document.getElementById("transactionList").innerHTML=html;
 }
 
-setNow();
-update();
+function deleteTransaction(id){
+transactions = transactions.filter(t=>t.id!==id && t.linkedId!==id);
+saveAll();
+updateDashboard();
+openLedger(currentLedger);
+}
+
+function applyQuickFilter(type){
+let now=new Date();
+let filtered=[];
+if(type==="thisMonth"){
+filtered=transactions.filter(t=>{
+let d=new Date(t.date);
+return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear() && t.ledger===currentLedger;
+});
+}
+if(type==="lastMonth"){
+let lastMonth=new Date(now.getFullYear(),now.getMonth()-1);
+filtered=transactions.filter(t=>{
+let d=new Date(t.date);
+return d.getMonth()===lastMonth.getMonth() && d.getFullYear()===lastMonth.getFullYear() && t.ledger===currentLedger;
+});
+}
+if(type==="thisYear"){
+filtered=transactions.filter(t=>{
+let d=new Date(t.date);
+return d.getFullYear()===now.getFullYear() && t.ledger===currentLedger;
+});
+}
+renderTransactions(filtered);
+}
+
+function applyCustomFilter(){
+let from=new Date(document.getElementById("fromDate").value);
+let to=new Date(document.getElementById("toDate").value);
+let filtered=transactions.filter(t=>{
+let d=new Date(t.date);
+return d>=from && d<=to && t.ledger===currentLedger;
+});
+renderTransactions(filtered);
+}
+
+updateDashboard();
+navStack.push("dashboard");
 
 </script>
+
 </body>
 </html>
