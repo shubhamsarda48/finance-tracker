@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ledger Mobile</title>
+<title>Ledger</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -40,28 +40,14 @@ color:#777;
 margin-top:4px;
 }
 
-.screen{
-flex:1;
-display:none;
+.section{
 padding:20px;
-overflow-y:auto;
-}
-
-.active{
-display:block;
 }
 
 .section-title{
 font-family:'Playfair Display',serif;
 font-size:22px;
 margin-bottom:5px;
-}
-
-.section-sub{
-font-size:12px;
-letter-spacing:1px;
-color:#777;
-margin-bottom:20px;
 }
 
 .balance-box{
@@ -73,14 +59,8 @@ margin-bottom:20px;
 }
 
 .balance-box h2{
-font-size:40px;
+font-size:36px;
 margin:10px 0;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
 }
 
 .card{
@@ -88,59 +68,16 @@ background:white;
 padding:15px;
 border-radius:8px;
 border:1px solid #ddd;
-}
-
-.card h4{
-font-size:12px;
-letter-spacing:1px;
-color:#666;
-margin:0;
-}
-
-.card div{
-font-size:18px;
-margin-top:5px;
-}
-
-.transaction{
-background:white;
-padding:15px;
-border-radius:8px;
-border:1px solid #ddd;
 margin-bottom:10px;
 }
 
-.transaction-title{
-font-weight:600;
-}
-
-.transaction-meta{
-font-size:12px;
-color:#666;
-margin-top:4px;
-}
-
-.bottom-nav{
-display:flex;
-justify-content:space-around;
-border-top:1px solid #ddd;
-background:white;
-padding:10px 0;
-font-size:13px;
-}
-
-.bottom-nav div{
-flex:1;
-text-align:center;
-cursor:pointer;
-}
-
-input,select{
+input,select,textarea{
 width:100%;
 padding:12px;
 margin-top:10px;
 border-radius:6px;
 border:1px solid #ccc;
+font-size:14px;
 }
 
 button{
@@ -153,8 +90,26 @@ border:none;
 border-radius:6px;
 }
 
-canvas{
-margin-top:20px;
+.transaction{
+background:white;
+padding:15px;
+border-radius:8px;
+border:1px solid #ddd;
+margin-bottom:10px;
+}
+
+.transaction-meta{
+font-size:12px;
+color:#666;
+margin-top:5px;
+}
+
+.small-btn{
+background:#eee;
+color:#111;
+margin-top:8px;
+padding:8px;
+font-size:12px;
 }
 </style>
 </head>
@@ -165,142 +120,186 @@ margin-top:20px;
 
 <div class="header">
 <div class="brand">Ledger</div>
-<div class="subtitle">BUDGET TRACKER</div>
+<div class="subtitle">PERSONAL ACCOUNTING</div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="screen active">
+<div class="section">
 
 <div class="section-title">Dashboard</div>
-<div class="section-sub">FINANCIAL OVERVIEW</div>
 
 <div class="balance-box">
 <div>Available Balance</div>
 <h2 id="balance">₹0</h2>
 </div>
 
-<div class="grid">
 <div class="card">
-<h4>TOTAL INCOME</h4>
-<div id="income">0</div>
-</div>
-<div class="card">
-<h4>TOTAL EXPENSE</h4>
-<div id="expense">0</div>
-</div>
-<div class="card">
-<h4>ASSETS</h4>
-<div id="asset">0</div>
-</div>
-<div class="card">
-<h4>LIABILITIES</h4>
-<div id="liability">0</div>
-</div>
+Income: ₹<span id="income">0</span><br>
+Expense: ₹<span id="expense">0</span><br>
+Assets: ₹<span id="asset">0</span><br>
+Liabilities: ₹<span id="liability">0</span>
 </div>
 
 </div>
 
-<!-- TRANSACTIONS -->
-<div id="transactions" class="screen">
-
-<div class="section-title">Transactions</div>
-<div class="section-sub">ALL YOUR ENTRIES</div>
-
-<div id="transactionList"></div>
-
-<button onclick="showScreen('add')">+ Add Transaction</button>
-
-</div>
-
-<!-- ADD -->
-<div id="add" class="screen">
+<div class="section">
 
 <div class="section-title">Add Transaction</div>
-<div class="section-sub">NEW ENTRY</div>
 
 <input type="datetime-local" id="date">
-<select id="type">
+
+<select id="type" onchange="handleTypeChange()">
+<option value="">Select Type</option>
 <option>Income</option>
 <option>Expense</option>
 <option>Asset</option>
 <option>Liability</option>
+<option>Splitwise</option>
 </select>
-<input type="text" id="category" placeholder="Category">
-<input type="number" id="amount" placeholder="Amount">
 
-<button onclick="addTransaction()">Save</button>
+<select id="category"></select>
+
+<div id="splitwiseToggle" style="display:none;">
+<select id="splitwiseType">
+<option value="get">You Get</option>
+<option value="owe">You Owe</option>
+</select>
+</div>
+
+<div id="creditCardSection" style="display:none;">
+<label>
+<input type="checkbox" id="paidByCard" onchange="toggleCardSelect()">
+ Paid via Credit Card
+</label>
+<select id="cardSelect" style="display:none;">
+<option>HDFC Credit Card</option>
+<option>One Card</option>
+<option>Yes Bank Credit Card</option>
+</select>
+</div>
+
+<input type="number" id="amount" placeholder="Amount (negative allowed)">
+<textarea id="description" placeholder="Optional description"></textarea>
+
+<button onclick="saveTransaction()">Save</button>
 
 </div>
 
-<!-- ANALYTICS -->
-<div id="analytics" class="screen">
-
-<div class="section-title">Analytics</div>
-<div class="section-sub">INSIGHTS & TRENDS</div>
-
-<canvas id="expenseChart"></canvas>
-
-</div>
-
-<div class="bottom-nav">
-<div onclick="showScreen('dashboard')">Dashboard</div>
-<div onclick="showScreen('transactions')">Transactions</div>
-<div onclick="showScreen('analytics')">Analytics</div>
+<div class="section">
+<div class="section-title">Transactions</div>
+<div id="transactionList"></div>
 </div>
 
 </div>
 
 <script>
 
-let transactions=JSON.parse(localStorage.getItem("data"))||[];
-let chart;
+const defaultCategories={
+Income:["Salary"],
+Expense:["Rent","Cook","Cleaner","Food","Travel","Electricity"],
+Asset:["PwC"],
+Liability:["HDFC Credit Card","One Card","Yes Bank Credit Card"]
+};
 
-function save(){
-localStorage.setItem("data",JSON.stringify(transactions));
+let transactions=JSON.parse(localStorage.getItem("ledgerData"))||[];
+let editId=null;
+
+function saveData(){
+localStorage.setItem("ledgerData",JSON.stringify(transactions));
 }
 
-function showScreen(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+function handleTypeChange(){
+const type=document.getElementById("type").value;
+const categorySelect=document.getElementById("category");
+categorySelect.innerHTML="";
+document.getElementById("splitwiseToggle").style.display="none";
+document.getElementById("creditCardSection").style.display="none";
+
+if(type==="Splitwise"){
+document.getElementById("splitwiseToggle").style.display="block";
+categorySelect.innerHTML="<option>Splitwise</option>";
+return;
 }
 
-function setCurrentDateTime(){
+if(defaultCategories[type]){
+defaultCategories[type].forEach(c=>{
+categorySelect.innerHTML+=`<option>${c}</option>`;
+});
+}
+
+if(type==="Expense"){
+document.getElementById("creditCardSection").style.display="block";
+}
+}
+
+function toggleCardSelect(){
+document.getElementById("cardSelect").style.display=
+document.getElementById("paidByCard").checked?"block":"none";
+}
+
+function setNow(){
 const now=new Date();
 const offset=now.getTimezoneOffset();
 const local=new Date(now.getTime()-offset*60000);
 document.getElementById("date").value=local.toISOString().slice(0,16);
 }
 
-function addTransaction(){
+function saveTransaction(){
 const date=document.getElementById("date").value;
 const type=document.getElementById("type").value;
 const category=document.getElementById("category").value;
 const amount=parseFloat(document.getElementById("amount").value);
+const description=document.getElementById("description").value;
 
-if(!date||!category||!amount)return alert("Fill all fields");
+if(!date||!type||!category||isNaN(amount))return alert("Fill required fields");
 
-transactions.push({id:Date.now(),date,type,category,amount});
-save();
+if(editId){
+transactions=transactions.filter(t=>t.id!==editId && t.linkedId!==editId);
+editId=null;
+}
+
+const id=Date.now();
+
+if(type==="Splitwise"){
+const swType=document.getElementById("splitwiseType").value;
+const finalType=swType==="get"?"Asset":"Liability";
+transactions.push({id,date,type:finalType,category:"Splitwise",amount,description});
+}else{
+transactions.push({id,date,type,category,amount,description});
+}
+
+if(type==="Expense" && document.getElementById("paidByCard").checked){
+const card=document.getElementById("cardSelect").value;
+transactions.push({
+id:Date.now()+1,
+date,
+type:"Liability",
+category:card,
+amount:amount,
+description:"Auto from expense",
+linkedId:id
+});
+}
+
+saveData();
+resetForm();
 update();
-showScreen("dashboard");
-setCurrentDateTime();
-document.getElementById("category").value="";
+}
+
+function resetForm(){
 document.getElementById("amount").value="";
+document.getElementById("description").value="";
+document.getElementById("paidByCard").checked=false;
+document.getElementById("cardSelect").style.display="none";
+setNow();
 }
 
 function update(){
 
 let income=0,expense=0,asset=0,liability=0;
-let expenseData={};
-
-transactions.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
 transactions.forEach(t=>{
 if(t.type==="Income")income+=t.amount;
-if(t.type==="Expense"){
-expense+=t.amount;
-expenseData[t.category]=(expenseData[t.category]||0)+t.amount;
-}
+if(t.type==="Expense")expense+=t.amount;
 if(t.type==="Asset")asset+=t.amount;
 if(t.type==="Liability")liability+=t.amount;
 });
@@ -312,33 +311,44 @@ document.getElementById("liability").innerText=liability;
 document.getElementById("balance").innerText="₹"+(income-expense);
 
 renderTransactions();
-renderChart(expenseData);
 }
 
 function renderTransactions(){
 const container=document.getElementById("transactionList");
 container.innerHTML="";
+transactions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
 transactions.forEach(t=>{
 container.innerHTML+=`
 <div class="transaction">
-<div class="transaction-title">${t.category}</div>
+<div><strong>${t.category}</strong> (${t.type}) - ₹${t.amount}</div>
 <div class="transaction-meta">
-${new Date(t.date).toLocaleString()} • ${t.type} • ₹${t.amount}
+${new Date(t.date).toLocaleString()}<br>
+${t.description||""}
 </div>
+<button class="small-btn" onclick="editTransaction(${t.id})">Edit</button>
+<button class="small-btn" onclick="deleteTransaction(${t.id})">Delete</button>
 </div>`;
 });
 }
 
-function renderChart(data){
-const ctx=document.getElementById("expenseChart");
-if(chart)chart.destroy();
-chart=new Chart(ctx,{
-type:"pie",
-data:{labels:Object.keys(data),datasets:[{data:Object.values(data)}]}
-});
+function editTransaction(id){
+const t=transactions.find(t=>t.id===id);
+editId=id;
+document.getElementById("date").value=t.date;
+document.getElementById("type").value=t.type==="Asset"&&t.category==="Splitwise"?"Splitwise":t.type;
+handleTypeChange();
+document.getElementById("amount").value=t.amount;
+document.getElementById("description").value=t.description;
 }
 
-setCurrentDateTime();
+function deleteTransaction(id){
+transactions=transactions.filter(t=>t.id!==id && t.linkedId!==id);
+saveData();
+update();
+}
+
+setNow();
 update();
 
 </script>
